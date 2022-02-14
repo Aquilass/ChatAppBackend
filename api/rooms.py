@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from requests import RoomCreateRequest
 import logging
-from controllers import insert_room, get_rooms, get_room, get_current_active_user, add_user_to_room
+from controllers import insert_room, get_rooms, get_room, get_current_active_user, add_user_to_room, upload_message_to_room
 from mongodb import get_nosql_db, MongoClient
 from config import MONGODB_DB_NAME
 from models import User
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 async def create_room(
     request: RoomCreateRequest,
     client: MongoClient = Depends(get_nosql_db),
-    current_user: User = Depends(get_current_active_user),
+    # current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a room
@@ -26,20 +26,42 @@ async def create_room(
     return res
 
 
-@router.put("/room/{room_name}", tags=["Rooms"])
+@router.put("/roomAddUsers/{room_name}", tags=["Rooms"])
 async def add_user_to_room_members(
-    room_name: str, client: MongoClient = Depends(get_nosql_db), current_user: User = Depends(get_current_active_user),
+    room_name: str, username: str, client: MongoClient = Depends(get_nosql_db)
+    # current_user: User = Depends(get_current_active_user),
+    # current_user: User = Depends(get_current_active_user),
 ):
     """
     Add a user to the room's members
     """
-    row = await add_user_to_room(current_user.username, room_name)
+    row = await add_user_to_room(
+        # current_user.username,
+        username,
+        room_name)
     return row
+
+
+@router.put("/roomAddMessages/{room_name}", tags=["Rooms"])
+async def add_Messages_to_SocialCenter(
+    room_name: str, username: str, msg: str, client: MongoClient = Depends(get_nosql_db)
+    # current_user: User = Depends(get_current_active_user),
+    # current_user: User = Depends(get_current_active_user),
+):
+    """
+    Add a user to the room's members
+    """
+    data = {"room_name": room_name, "user": {"username": username}, "msg": msg}
+
+    result = await upload_message_to_room(room_name, username, msg
+                                          )
+    return result
 
 
 @router.get("/rooms", tags=["Rooms"])
 async def get_all_rooms(
-    client: MongoClient = Depends(get_nosql_db), current_user: User = Depends(get_current_active_user)
+    client: MongoClient = Depends(get_nosql_db),
+    # current_user: User = Depends(get_current_active_user)
 ):
     """
     Fetch all available rooms
@@ -50,7 +72,8 @@ async def get_all_rooms(
 
 @router.get("/room/{room_name}", tags=["Rooms"])
 async def get_single_room(
-    room_name, current_user: User = Depends(get_current_active_user),
+    room_name,
+    # current_user: User = Depends(get_current_active_user),
 ):
     """
     Get Room by room name

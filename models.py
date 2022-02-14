@@ -20,7 +20,7 @@ class UserInDB(User):
 
 class Message(BaseModel):
     user: UserInDB
-    content: str = None
+    content: str
 
 
 class MessageInDB(Message):

@@ -9,7 +9,7 @@ from config import MONGODB_DB_NAME
 from api import router as api_router
 from notifier import ConnectionManager
 from starlette.websockets import WebSocketState
-
+from fastapi.responses import HTMLResponse
 import pymongo
 import logging
 import json
@@ -24,6 +24,29 @@ origins = [
     "http://localhost:3000",
     "http://localhost:3000",
 ]
+html = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ChatAppBackend</title>
+    </head>
+    <body>
+    <div align="center">
+        <h1>ChatAppBackend</h1>
+        <p>This is the backend of the ChatApp</p>
+        <p>Type in /docs in url for documentation</p>
+        <p>For any further questions please contact: richard.u15@gmail.com</p>
+    </div>
+       
+    </body>
+</html>
+"""
+
+
+@app.get("/")
+def defaultScreen():
+    return HTMLResponse(html)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,7 +81,8 @@ async def startup_event():
         user_collection = db.users
         room_collection = db.rooms
         user_collection.create_index("username", name="username", unique=True)
-        room_collection.create_index("room_name", name="room_name", unique=True)
+        room_collection.create_index(
+            "room_name", name="room_name", unique=True)
     except pymongo.errors.CollectionInvalid as e:
         logging.warning(e)
         pass
@@ -102,7 +126,8 @@ async def websocket_endpoint(websocket: WebSocket, room_name, user_name):
                     logger.info(f"DATA RECIEVED: {data}")
                     await manager.broadcast(f"{data}")
             else:
-                logger.warning(f"Websocket state: {websocket.application_state}, reconnecting...")
+                logger.warning(
+                    f"Websocket state: {websocket.application_state}, reconnecting...")
                 await manager.connect(websocket, room_name)
     except Exception as ex:
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
